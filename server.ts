@@ -43,7 +43,7 @@ app.use(passport.session());
 app.set('view engine', 'ejs');
 
 app.get("/auth", (req, res) => {
-    res.render("Auth.ejs");
+    res.render("Auth.ejs", { url: process.env.APPLICATON_URL });
 })
 
 app.post("/login", (req, res, next) => {
@@ -54,7 +54,7 @@ app.post("/login", (req, res, next) => {
             req.logIn(user, err => {
                 if (err) throw err;
 
-                res.render("Home.ejs", {user: user});
+                res.render("Home.ejs", {user: user , url: process.env.APPLICATON_URL});
             })
         }
     })(req, res, next);
