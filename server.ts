@@ -90,7 +90,7 @@ app.get("/api/auth/google", passport.authenticate("google", {scope: ["email", "p
 
 app.get("/api/auth/google/callback",
     passport.authenticate('google', {
-        successRedirect: "http://localhost:5000",
+        successRedirect: process.env.APPLICATON_URL,
         failureRedirect: '/error'
     }
 ));

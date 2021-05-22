@@ -16,7 +16,7 @@ module.exports = function (passport: PassportStatic) {
     passport.use(new GoogleStrategy({
         clientID:  process.env.GOOGLE_CLIENT_ID as string,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-        callbackURL: "http://localhost:5000/api/auth/google/callback",
+        callbackURL: process.env.GOOGLE_CALLBACK as string,
     }, async (_request:any , _accessToken:any, _refreshToken:any, profile:any, done:Function) => {
         const user = await prisma.user.findUnique({
             where: {
