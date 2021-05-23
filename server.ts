@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
 const session = require("express-session");
 const bodyParser = require("body-parser");
+const path = require("path");
 
 const prisma = new PrismaClient()
 const app = express()
@@ -84,11 +85,6 @@ app.post("/register", async (req, res) => {
     }
 })
 
-app.get("/user", async (req, res) => {
-    console.log(req.user);
-})
-
-
 app.get("/api/auth/google", passport.authenticate("google", {scope: ["email", "profile"]}))
 
 app.get("/api/auth/google/callback",
@@ -99,5 +95,17 @@ app.get("/api/auth/google/callback",
 ));
 
 
+
+
+const STATIC = path.resolve(__dirname, "public", "build");
+const INDEX = path.resolve(__dirname,"public", 'index.html');
+app.use(express.static(STATIC));
+
+app.get("/*", (req, res) => {
+    if (!req.user) {
+        return res.render("Auth.ejs", {view: "register", url: process.env.APPLICATON_URL })
+    }
+    res.sendFile(INDEX);
+})
 
 app.listen(port);
