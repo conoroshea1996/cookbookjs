@@ -259,6 +259,10 @@ footer a {
     color: #3c97bf;
     text-decoration: none;
 }
+.error {
+	color: red;
+	text-align: left;
+}
     </style>
 </head>
 <body>
@@ -271,6 +275,11 @@ footer a {
 			<input type="text" placeholder="Last Name" name="lastName" required/>
             <input type="email" placeholder="Email" name="email" required />
             <input type="password" placeholder="Password" name="password" required />
+			<% if (locals.alreadyExist) { %>
+			<p class="error">
+				User already exist sign in instead
+			</p>
+			<% } %>
             <button type="submit">Sign Up</button>
         </form>
     </div>
@@ -298,7 +307,11 @@ footer a {
             <span>or use your account</span>
             <input name="email" type="email" placeholder="Email" required />
             <input name="password" type="password" placeholder="Password" required />
-            <a href="#">Forgot your password?</a>
+			<% if (locals.userNotFound) { %>
+				<p class="error">
+					Could not find user <br> sign up instead
+				</p>
+			<% } %>
             <button type="submit">Sign In</button>
         </form>
     </div>
@@ -318,15 +331,25 @@ footer a {
     </div>
 </div>
 <script>
-    const signUpButton = document.getElementById('signUp');
-    const signInButton = document.getElementById('signIn');
-    const container = document.getElementById('container');
-    signUpButton.addEventListener('click', () => {
-        container.classList.add("right-panel-active");
-    });
-    signInButton.addEventListener('click', () => {
-        container.classList.remove("right-panel-active");
-    });
+	const view = "<%= view %>";
+	const signUpButton = document.getElementById('signUp');
+	const signInButton = document.getElementById('signIn');
+	const container = document.getElementById('container');
+
+	const showSignUpPanel = () => {
+		console.log("sign up")
+		container.classList.add("right-panel-active")
+	};
+	const showLoginPanel = () => {container.classList.remove("right-panel-active")};
+
+	if(view === "login"){
+		showLoginPanel();
+	}
+	if(view === "register"){
+		showSignUpPanel();
+	}
+    signUpButton.addEventListener('click', showSignUpPanel);
+    signInButton.addEventListener('click', showLoginPanel);
 </script>
 </body>
 

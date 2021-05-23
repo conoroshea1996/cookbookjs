@@ -43,18 +43,21 @@ app.use(passport.session());
 app.set('view engine', 'ejs');
 
 app.get("/auth", (req, res) => {
-    res.render("Auth.ejs", { url: process.env.APPLICATON_URL });
+    res.render("Auth.ejs", { url: process.env.APPLICATON_URL, view:"login" });
 })
 
 app.post("/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
         if (err) throw err;
-        if (!user) res.send("no USER");
+
+        if (!user) {
+            res.render("Auth.ejs", { view: "login", userNotFound: true, url: process.env.APPLICATON_URL });
+        }
         else {
             req.logIn(user, err => {
                 if (err) throw err;
 
-                res.render("Home.ejs", {user: user , url: process.env.APPLICATON_URL});
+                res.render("Home.ejs", {user: user});
             })
         }
     })(req, res, next);
@@ -63,7 +66,7 @@ app.post("/login", (req, res, next) => {
 app.post("/register", async (req, res) => {
     const existingUser = await prisma.user.findUnique({ where: { email: req.body.email } })
     if (existingUser) {
-        res.render("Auth.ejs", {alreadyExist: true })
+        res.render("Auth.ejs", {view: "register", alreadyExist: true , url: process.env.APPLICATON_URL })
     } else {
         const hashedPassword = await bcrypt.hash(req.body.password, 10);
         const newUser: userCreateDto = {
