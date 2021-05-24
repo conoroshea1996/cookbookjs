@@ -3,6 +3,7 @@ import { PrismaClient, User } from '@prisma/client'
 import { json } from "body-parser";
 import { PassportStatic } from "passport"
 import { userCreateDto } from "./models/users/userCreateDto";
+
 const cors = require("cors");
 const passport: PassportStatic = require("passport");
 const cookieParser = require("cookie-parser");
@@ -11,12 +12,14 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const path = require("path");
 
+
 const prisma = new PrismaClient()
 const app = express()
 
 const port = process.env.PORT || 5000;
 
 require("./passportConfig")(passport);
+
 
 app.use(json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -30,11 +33,16 @@ app.use(
 );
 
 app.use(
-  session({
-    secret: process.env.COOKIE_SECRET,
-    resave: true,
-    saveUninitialized: true,
-  })
+    session({
+        store: new (require('connect-pg-simple')(session))({
+            conString: process.env.DATABASE_URL,
+            createTableIfMissing: true
+        }),
+        secret: process.env.COOKIE_SECRET,
+        resave: false,
+        cookie: { maxAge: 2 * 24 * 60 * 60 * 1000 },
+        saveUninitialized: false
+    })
 );
 app.use(cookieParser("secretcode"));
 app.use(passport.initialize());
@@ -50,7 +58,6 @@ app.get("/auth", (req, res) => {
 app.post("/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
         if (err) throw err;
-
         if (!user) {
             res.render("Auth.ejs", { view: "login", userNotFound: true, url: process.env.APPLICATON_URL });
         }
@@ -58,7 +65,7 @@ app.post("/login", (req, res, next) => {
             req.logIn(user, err => {
                 if (err) throw err;
 
-                res.render("Home.ejs", {user: user});
+                return res.render("Home.ejs", {user: user});
             })
         }
     })(req, res, next);
@@ -95,17 +102,16 @@ app.get("/api/auth/google/callback",
 ));
 
 
-
+app.get("/*", (req, res) => {
+    if (!req.user) {
+        return res.redirect("/auth");
+    } else {
+        res.sendFile(INDEX);
+    }
+})
 
 const STATIC = path.resolve(__dirname, "client", "public");
 const INDEX = path.resolve(STATIC, 'index.html');
 app.use(express.static(STATIC));
-
-app.get("/*", (req, res) => {
-    if (!req.user) {
-        return res.redirect("/auth");
-    }
-    res.sendFile(INDEX);
-})
 
 app.listen(port);
