@@ -37,7 +37,7 @@ app.use(
         store: new (require('connect-pg-simple')(session))({
             conObject: {
             connectionString: process.env.DATABASE_URL,
-            ssl: true,
+              ssl: { rejectUnauthorized: false }
             },
         }),
         secret: process.env.COOKIE_SECRET,
