@@ -35,8 +35,10 @@ app.use(
 app.use(
     session({
         store: new (require('connect-pg-simple')(session))({
-            conString: process.env.DATABASE_URL,
-            createTableIfMissing: true
+            conObject: {
+            connectionString: process.env.DATABASE_URL,
+            ssl: true,
+            },
         }),
         secret: process.env.COOKIE_SECRET,
         resave: false,
