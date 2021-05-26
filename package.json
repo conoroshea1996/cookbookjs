@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npx ts-node server.ts",
-    "heroku-prebuild": "cd client && npm install --dev",
-    "heroku-postbuild": "cd client && npm install && npm run build"
+    "heroku-prebuild": "cd frontend && npm install --dev",
+    "heroku-postbuild": "cd frontend && npm install && npm run build"
   },
   "keywords": [],
   "author": "",

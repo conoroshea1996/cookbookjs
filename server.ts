@@ -2,7 +2,8 @@ import express from "express";
 import { PrismaClient, User } from '@prisma/client'
 import { json } from "body-parser";
 import { PassportStatic } from "passport"
-import { userCreateDto } from "./models/users/userCreateDto";
+import { userCreateDto } from "./models/users/userDto";
+import { ensureAuthenticated } from "./middlewares/auth";
 
 const cors = require("cors");
 const passport: PassportStatic = require("passport");
@@ -11,15 +12,17 @@ const bcrypt = require("bcryptjs");
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const path = require("path");
-
-
 const prisma = new PrismaClient()
 const app = express()
 
+const userRoutes = require('./controllers/user');
+const authRoutes = require('./controllers/auth');
+
 const port = process.env.PORT || 5000;
+const STATIC = path.resolve(__dirname, "frontend", "dist");
+
 
 require("./passportConfig")(passport);
-
 
 app.use(json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -37,7 +40,7 @@ app.use(
         store: new (require('connect-pg-simple')(session))({
             conObject: {
             connectionString: process.env.DATABASE_URL,
-              ssl: { rejectUnauthorized: false }
+            //   ssl: { rejectUnauthorized: false }
             },
         }),
         secret: process.env.COOKIE_SECRET,
@@ -53,46 +56,6 @@ app.use(passport.session());
 // set the view engine to ejs
 app.set('view engine', 'ejs');
 
-app.get("/auth", (req, res) => {
-    res.render("Auth.ejs", { url: process.env.APPLICATON_URL, view:"login" });
-})
-
-app.post("/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
-        if (err) throw err;
-        if (!user) {
-            res.render("Auth.ejs", { view: "login", userNotFound: true, url: process.env.APPLICATON_URL });
-        }
-        else {
-            req.logIn(user, err => {
-                if (err) throw err;
-
-                return res.render("Home.ejs", {user: user});
-            })
-        }
-    })(req, res, next);
-})
-
-app.post("/register", async (req, res) => {
-    const existingUser = await prisma.user.findUnique({ where: { email: req.body.email } })
-    if (existingUser) {
-        res.render("Auth.ejs", {view: "register", alreadyExist: true , url: process.env.APPLICATON_URL })
-    } else {
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
-        const newUser: userCreateDto = {
-            email: req.body.email,
-            firstName: req.body.firstName,
-            lastName: req.body.lastName,
-            password: hashedPassword,
-        };
-        
-       const createdUser = await prisma.user.create({ data: newUser });
-        
-        req.logIn(createdUser, err => {
-            res.render("Home.ejs", { user: createdUser });
-        });
-    }
-})
 
 app.get("/api/auth/google", passport.authenticate("google", {scope: ["email", "profile"]}))
 
@@ -101,19 +64,16 @@ app.get("/api/auth/google/callback",
         successRedirect: process.env.APPLICATON_URL,
         failureRedirect: '/error'
     }
-));
+    ));
 
 
-app.get("/*", (req, res) => {
-    if (!req.user) {
-        return res.redirect("/auth");
-    } else {
-        res.sendFile(INDEX);
-    }
-})
+app.use('/api/*', userRoutes);
+app.use("/auth/*", authRoutes);
 
-const STATIC = path.resolve(__dirname, "client", "public");
-const INDEX = path.resolve(STATIC, 'index.html');
-app.use(express.static(STATIC));
+app.use("/", ensureAuthenticated ,express.static(STATIC));
+
+app.all("/*", (req, res) => {
+    res.sendFile(path.resolve(STATIC, 'index.html'));
+});
 
 app.listen(port);
