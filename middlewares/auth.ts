@@ -4,5 +4,5 @@ export const ensureAuthenticated: RequestHandler = (req, res, next) => {
   if (req.isAuthenticated())
     return next();
   else
-    return res.redirect("/auth/index");
+    return res.redirect("/auth");
 };

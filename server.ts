@@ -4,6 +4,16 @@ import { json } from "body-parser";
 import { PassportStatic } from "passport"
 import { userCreateDto } from "./models/users/userDto";
 import { ensureAuthenticated } from "./middlewares/auth";
+import redis from 'redis';
+
+const redisClient = redis.createClient({
+    host: 'localhost',
+    port: 6379,
+});
+
+redisClient.on('error', (err:any) => {
+    console.log('Error ' + err);
+});
 
 const cors = require("cors");
 const passport: PassportStatic = require("passport");
@@ -16,6 +26,7 @@ const prisma = new PrismaClient()
 const app = express()
 
 const userRoutes = require('./controllers/user');
+const documentsRoutes = require('./controllers/documents');
 const authRoutes = require('./controllers/auth');
 
 const port = process.env.PORT || 5000;
@@ -40,7 +51,7 @@ app.use(
         store: new (require('connect-pg-simple')(session))({
             conObject: {
             connectionString: process.env.DATABASE_URL,
-              ssl: { rejectUnauthorized: false }
+            //   ssl: { rejectUnauthorized: false }
             },
         }),
         secret: process.env.COOKIE_SECRET,
@@ -64,11 +75,10 @@ app.get("/api/auth/google/callback",
         successRedirect: process.env.APPLICATON_URL,
         failureRedirect: '/error'
     }
-    ));
-
+));
 
 app.use('/api/*', userRoutes);
-app.use("/auth/*", authRoutes);
+app.use("/auth", authRoutes);
 
 app.use("/", ensureAuthenticated ,express.static(STATIC));
 

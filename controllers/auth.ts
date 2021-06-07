@@ -13,6 +13,7 @@ router.get("/", (req, res) => {
 })
 
 router.post("/login", (req, res, next) => {
+    console.log("rrrrr")
     passport.authenticate("local", (err, user, info) => {
         if (err) throw err;
         if (!user) {
@@ -22,13 +23,14 @@ router.post("/login", (req, res, next) => {
             req.logIn(user, err => {
                 if (err) throw err;
 
-                return res.render("Home.ejs", {user: user});
+                return res.redirect("/");
             })
         }
     })(req, res, next);
 })
 
 router.post("/register", async (req, res) => {
+    console.log("rrrrr")
     const existingUser = await prisma.user.findUnique({ where: { email: req.body.email } })
     if (existingUser) {
         res.render("Auth.ejs", {view: "register", alreadyExist: true , url: process.env.APPLICATON_URL })
@@ -40,11 +42,13 @@ router.post("/register", async (req, res) => {
             lastName: req.body.lastName,
             password: hashedPassword,
         };
+
+        console.log(newUser);
         
        const createdUser = await prisma.user.create({ data: newUser });
         
         return req.logIn(createdUser, err => {
-            res.render("Home.ejs", { user: createdUser });
+           return res.redirect("/");
         });
     }
 })

@@ -11,10 +11,28 @@ generator client {
 }
 
 model User {
-  id           Int     @id @default(autoincrement())
-  email        String  @unique
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
   firstName    String
   lastName     String
   password     String
   profileImage String?
+  document     Document[]
+}
+
+model Document {
+  id              Int     @id @default(autoincrement())
+  user            User    @relation(fields: [userId], references: [id])
+  userId          Int
+  allowedUserIds  Int[]
+  documentContent String
+  steps           Steps[]
+}
+
+model Steps {
+  id           Int       @id @default(autoincrement())
+  document     Document? @relation(fields: [documentId], references: [id])
+  documentId   Int?
+  name         String
+  displayOrder Int
 }
